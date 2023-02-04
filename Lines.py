@@ -11,6 +11,6 @@ for root, dirs, files in os.walk("./"):
                     if line.startswith('\''):
                         commentcounter+=1
                     counter+=1
-                print(f'El archivo {file} tiene {counter} lineas de código de los cuales {commentcounter} son comentarios.')
+                print(f'The file {file} has {counter} of code, which {commentcounter} are comments')
 
                 
