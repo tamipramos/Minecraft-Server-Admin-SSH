@@ -240,7 +240,7 @@ class Files():
             "spawn-animals":"true",
             "function-permission-level":2,
             "initial-enabled-packs":"vanilla",
-            "level-type":"minecraft\\:normal",
+            "level-type":"minecraft\\\\:normal",
             "text-filtering-config":"",
             "spawn-monsters":"true",
             "enforce-whitelist":"false",
