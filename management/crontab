@@ -1,0 +1,2 @@
+00 2 * * * bash /home/tamipramos/forge/backup.sh
+*/15 * * * * python3 /home/tamipramos/forge/query-checker.py $(curl -s http:/ifconfig.me -w "\n")
