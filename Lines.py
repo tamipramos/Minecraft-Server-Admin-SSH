@@ -1,4 +1,7 @@
-import os
+import os, datetime
+totalcode=0
+totalcomment=0
+date=datetime.datetime.now()
 for root, dirs, files in os.walk("./"):
     for file in files:
         if file.endswith(".py") and dirs != "management" and dirs != "config" and dirs != '.id_rsa':
@@ -11,6 +14,11 @@ for root, dirs, files in os.walk("./"):
                     if line.startswith('\''):
                         commentcounter+=1
                     counter+=1
-                print(f'The file {file} has {counter} of code, which {commentcounter} are comments')
+                totalcode+=counter
+                totalcomment+=commentcounter
+                print(f'- The file {file} has  `[{counter}]`  of code, which  [{commentcounter}]  are comments')
+print(f'#### TOTAL LINES OF CODE: `{totalcode}`')
+print(f'#### TOTAL LINES OF COMMENTS: `{totalcomment}`')
+print(f'at {date.strftime("%d-%b-%Y")}')
 
                 
