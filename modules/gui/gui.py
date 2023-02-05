@@ -3,11 +3,17 @@ GRAPHIC HANDLER FOR THE APPLICATION
 '''
 import sys, os, math, requests, markdown, tkhtmlview
 # getting the name of the directory where this file is present.
+# /gui
 current = os.path.dirname(os.path.realpath(__file__))
 # Getting the parent directory name where the current directory is present.
+# /modules
 parent = os.path.dirname(current)
+# /Admin_Server_Minecraft
+root = os.path.dirname(parent)
+
 # adding the parent directory to the sys.path.
 sys.path.append(parent)
+sys.path.append(root)
 
 import customtkinter, tkinter, tkinter.messagebox
 from PIL import Image
@@ -32,13 +38,15 @@ class Main(customtkinter.CTk):
         super().__init__()
         #Hide window on startup
         self.withdraw()
+        self.sshConfig=sshConfig
+        self._SERVERNAME=((str(self.sshConfig['name']) if not "" else "Minecraft") + f" | " + str(self.sshConfig['hostname'] + ":" + (str(self.sshConfig['port']) if not "" else "22")))
+        self.title(self._SERVERNAME)
          # Event Closing
         self.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(text="Would you like to close the administrator?")) 
         # Init
         self.sshConfig=sshConfig
+        self.serverProperties=fileSystem.update_config_files()[1]
         self.fileSystem=fileSystem
-        self._SERVERNAME=(str(sshConfig['name']) + f" | " + str(sshConfig['hostname'] + ":" + str(sshConfig['port'])))
-        self.title(self._SERVERNAME)
         self.server = client.Client(hostname=None,
                                    port=22,
                                    username=None, 
@@ -61,7 +69,9 @@ class Main(customtkinter.CTk):
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
-
+        print(root)
+        self.icon=str(root+'/images/favicon.ico')
+        self.iconbitmap(self.icon)
 
 ###==========================================================================================================================###
 #================================================== NAVIGATION ================================================================#
@@ -429,7 +439,7 @@ class Main(customtkinter.CTk):
         for key in self.sshConfig.keys():
             ConfigParams.append([key, self.fileSystem.getConfig(file=self.fileSystem.sshConfigurationDestination, key=key)])
         window = Custom_Toplevel(parent=self)
-
+        window.iconbitmap(self.icon)
         window.resizable(False, False)
         w = 500
         h = 500
@@ -455,10 +465,19 @@ class Main(customtkinter.CTk):
         def onSubmit(*args, **kwargs):
 
             for config_param in ConfigParams:
+                if config_param[0] == "name" and self.sshConfig['name'] == "":
+                    serverName=customtkinter.CTkInputDialog(title="Server Name", text="Pick a server Name:")
+                    serverName.iconbitmap(self.icon)
+                    title=serverName.get_input()
+                    if title != "":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old='name', new=title)
+                        self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
                 if config_param[0] == "hostname":
                     self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_hostname_entry.get())
-                if config_param[0] == "port":
+                if config_param[0] == "port" and window_login_port_entry.get() != "":
                     self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_port_entry.get())
+                elif config_param[0] == "port" and window_login_port_entry.get() == "":
+                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=22)
                 if config_param[0] == "username":
                     self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_username_entry.get())
                 if config_param[0] == "password" and window_login_password_checkbox.get() == 1:
@@ -478,7 +497,16 @@ class Main(customtkinter.CTk):
                 #Map the view again
                 self.navigation_frame.grid(row=0, column=0, sticky="nsew")
                 self.navigation_frame.grid_rowconfigure(25, weight=1)
-                self.deiconify()
+                self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
+                
+                if str(self.sshConfig['name']) == "":
+                    self.destroy()
+                else:
+                    self._SERVERNAME=(str(self.sshConfig['name']) + f" | " + str(self.sshConfig['hostname'] + ":" + (str(self.sshConfig['port']) if not "" else "22")))
+                    self.navigation_frame_label.configure(text=self._SERVERNAME)
+                    self.title(self._SERVERNAME)
+                    self.deiconify()
+                    
             except Exception as e:
                 fail_login_label.configure(text=str(e).capitalize())
                 fail_login_label.grid(row=1, column=0, padx=15, pady=(15,15))

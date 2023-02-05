@@ -1,8 +1,8 @@
 #!/bin/bash
 
-statusFile=./logs/status.log
+statusFile=/home/tamipramos/forge/logs/status.log
 
-backupFile=./logs/backup.log
+backupFile=/home/tamipramos/forge/logs/backup.log
 
 if [ -f $backupFile ];then
         if [[ "$2" == "backup" ]];then

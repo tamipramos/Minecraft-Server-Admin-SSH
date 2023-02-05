@@ -47,9 +47,16 @@ for key in resp.keys():
 while not _ON:
         print("[X] El servidor está offline.")
         print("[!] Reinicializando servidor...")
+        result = subprocess.run(['screen', '-ls'], stdout=subprocess.PIPE)
+        if 'No Sockets' in result.stdout.decode('utf-8'):
+                subprocess.run('screen -S minecraft', shell=True, executable="/bin/bash")
         subprocess.run('screen -S minecraft -p 0 -X stuff "/home/tamipramos/forge/run.sh^M"',shell=True, executable="/bin/bash")
         os.system('/home/tamipramos/forge/logger.sh "Reinicializando servidor."')
         _ON=True
 if _ON:
         print("[*] El servidor está online.")
         os.system('/home/tamipramos/forge/logger.sh "Servidor iniciado." status')
+
+
+
+

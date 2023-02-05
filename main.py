@@ -39,12 +39,6 @@ serverProperties = data['serverProperties']
 ###==========================================================================================================================###
 #================================================== APP HANDLER ===============================================================#
 ###==========================================================================================================================###
-def update_config_files():
-    data = eval(open(current_dir+'/config/settings.json', 'r').read())
-    serverConf = data['serverConfig']
-    serverProperties = data['serverProperties']
-    return serverConf, serverProperties
-
 
 #create main files
 F=files.Files(current_dir+'/config', serverProperties, serverConf)

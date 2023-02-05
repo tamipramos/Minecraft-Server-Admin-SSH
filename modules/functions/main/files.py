@@ -31,6 +31,19 @@ class Files():
         ## Defines current config
         self.curr={}
       
+      
+      
+        # getting the name of the directory where this file is present.
+        # /main
+        self.current = os.path.dirname(os.path.realpath(__file__))
+        # Getting the parent directory name where the current directory is present.
+        # /functions
+        self.parent1 = os.path.dirname(self.current)
+        # /modules
+        self.parent2 = os.path.dirname(self.parent1)
+        # Admin_Server_Minecraft
+        self.root = os.path.dirname(self.parent2)
+      
     def createSettings(self):
         '''
         Creates a Minecraft-Readable config file with the given information.
@@ -254,3 +267,9 @@ class Files():
         f = open('./config/settings.json', 'w')
         f.write(settings)
         f.close()
+        
+    def update_config_files(self):
+        data = eval(open(self.root+'/config/settings.json', 'r').read())
+        serverConf = data['serverConfig']
+        serverProperties = data['serverProperties']
+        return serverConf, serverProperties
