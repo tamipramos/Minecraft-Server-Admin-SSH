@@ -1,4 +1,4 @@
-# **Project Roadmap**
+# **Project Roadmap** [NOT FUNCTIONAL YET]
 # **Actual state:**
 - The file Lines.py has  `[21]`  of code, which  [2]  are comments
 - The file main.py has  `[55]`  of code, which  [26]  are comments
