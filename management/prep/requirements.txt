@@ -1,0 +1,10 @@
+mcstatus
+requests
+markdown
+tkhtmlview
+customtkinter
+tkinter
+tkinter.messagebox
+json
+string
+paramiko

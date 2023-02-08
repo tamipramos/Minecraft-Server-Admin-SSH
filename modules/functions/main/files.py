@@ -273,3 +273,10 @@ class Files():
         serverConf = data['serverConfig']
         serverProperties = data['serverProperties']
         return serverConf, serverProperties
+    
+    def create_crontab(self):
+        pass
+    def create_autoinstall(self):
+        pass
+    def get_autoinstall(self):
+        pass

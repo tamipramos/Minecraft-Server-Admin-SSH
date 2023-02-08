@@ -10,7 +10,6 @@ current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 # /Admin_Server_Minecraft
 root = os.path.dirname(parent)
-
 # adding the parent directory to the sys.path.
 sys.path.append(parent)
 sys.path.append(root)
@@ -27,6 +26,19 @@ from gui.widgets.Custom_Widgets import Custom_Toplevel
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue", custom_theme
+
+import socket
+
+def internet_connected():
+    try:
+        # Verifica si se puede conectar a Google
+        host = socket.gethostbyname("www.google.com")
+        s = socket.create_connection((host, 80), 2)
+        return True
+    except:
+        pass
+    return False
+
 
 class Main(customtkinter.CTk):
     '''
@@ -47,13 +59,13 @@ class Main(customtkinter.CTk):
         self.sshConfig=sshConfig
         self.serverProperties=fileSystem.update_config_files()[1]
         self.fileSystem=fileSystem
-        self.server = client.Client(hostname=None,
-                                   port=22,
-                                   username=None, 
-                                   password=None, 
-                                   key_filename=None)
-        self.url='https://raw.githubusercontent.com/tamipramos/tamipramos.github.io/main/README.md'
-        self.patchNotes=requests.get(self.url)
+        self._OFFLINE_MODE: bool = None
+        if self._OFFLINE_MODE == False:
+            self.server = client.Client(hostname=None,
+                                        port=22,
+                                        username=None, 
+                                        password=None, 
+                                        key_filename=None)
         #print(markdown.markdown(text=self.patchNotes.content.decode('utf-8')))
         # Center window spawn
         self.w = 1100
@@ -190,15 +202,8 @@ class Main(customtkinter.CTk):
         #PATCH NOTES
         self.patch_notes_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.patch_notes_frame.grid_rowconfigure(0, weight=1)
-        self.patch_notes_text_box = tkhtmlview.HTMLLabel(master=self.patch_notes_frame, 
-                                                         background=self.background, 
-                                                         html=markdown.markdown(text=self.patchNotes.content.decode('utf-8'))
-                                                         .replace("<p>", '<p style="color:white">')
-                                                         .replace("<h1>", '<h1 style="color:white">')
-                                                         .replace("<h2>", '<h2 style="color:white">')
-                                                         .replace("<h3>", '<h3 style="color:white">'))
+
         
-        self.patch_notes_text_box.pack(expand=1, fill="both", padx=20, pady=20)
         
 
         ############
@@ -210,7 +215,7 @@ class Main(customtkinter.CTk):
         self.home_frame.grid_columnconfigure(1, weight=1)
         self.home_frame.grid_rowconfigure(6, weight=1)
         self.home_frame_button_1 = customtkinter.CTkButton(self.home_frame, text="LANZAR ECHO", command=self.boton)
-        self.home_frame_button_1.grid(row=0, column=2, padx=20, pady=20)
+        self.home_frame_button_1.grid(row=0, column=0, padx=20, pady=20)
         
         ##HOME-MONITORING
         self.home_monitoring_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
@@ -463,58 +468,104 @@ class Main(customtkinter.CTk):
                 return file
             
         def onSubmit(*args, **kwargs):
-
-            for config_param in ConfigParams:
-                if config_param[0] == "name" and self.sshConfig['name'] == "":
-                    serverName=customtkinter.CTkInputDialog(title="Server Name", text="Pick a server Name:")
-                    serverName.iconbitmap(self.icon)
-                    title=serverName.get_input()
-                    if title != "":
-                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old='name', new=title)
-                        self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
-                if config_param[0] == "hostname":
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_hostname_entry.get())
-                if config_param[0] == "port" and window_login_port_entry.get() != "":
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_port_entry.get())
-                elif config_param[0] == "port" and window_login_port_entry.get() == "":
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=22)
-                if config_param[0] == "username":
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_username_entry.get())
-                if config_param[0] == "password" and window_login_password_checkbox.get() == 1:
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_password_entry.get())
-                elif config_param[0] == "password" and window_login_password_checkbox.get() == 0:
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new="")
-                if config_param[0] == "private_key":
-                    self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_keypath_entry.get())
-            self.server = client.Client(hostname=window_login_hostname_entry.get(),
-                                   port=window_login_port_entry.get(),
-                                   username=window_login_username_entry.get(), 
-                                   password=window_login_password_entry.get(), 
-                                   key_filename=window_login_keypath_entry.get())
             try:
-                self.server.Connect()
-                window.destroy()
-                #Map the view again
-                self.navigation_frame.grid(row=0, column=0, sticky="nsew")
-                self.navigation_frame.grid_rowconfigure(25, weight=1)
-                self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
-                
-                if str(self.sshConfig['name']) == "":
-                    self.destroy()
-                else:
-                    self._SERVERNAME=(str(self.sshConfig['name']) + f" | " + str(self.sshConfig['hostname'] + ":" + (str(self.sshConfig['port']) if not "" else "22")))
-                    self.navigation_frame_label.configure(text=self._SERVERNAME)
-                    self.title(self._SERVERNAME)
-                    self.deiconify()
+                self.url='https://raw.githubusercontent.com/tamipramos/tamipramos.github.io/main/README.md'
+                self.patchNotes=requests.get(self.url)
+                self.patch_notes_text_box = tkhtmlview.HTMLLabel(master=self.patch_notes_frame, 
+                                                            background=self.background, 
+                                                            html=markdown.markdown(text=self.patchNotes.content.decode('utf-8') if self._OFFLINE_MODE == False else "<h1>There is no connection to internet</h1>")
+                                                            .replace("<p>", '<p style="color:white">')
+                                                            .replace("<h1>", '<h1 style="color:white">')
+                                                            .replace("<h2>", '<h2 style="color:white">')
+                                                            .replace("<h3>", '<h3 style="color:white">'))
+            except:
+                self.patch_notes_text_box = customtkinter.CTkLabel(master=self.patch_notes_frame, bg_color=self.background,
+                                                                   text="THERE IS NO INTERNET")
+            
+            if self._OFFLINE_MODE == False and internet_connected():
+                #ONLINE
+                for config_param in ConfigParams:
+                    if config_param[0] == "name" and self.sshConfig['name'] == "":
+                        serverName=customtkinter.CTkInputDialog(title="Server Name", text="Pick a server Name:")
+                        serverName.iconbitmap(self.icon)
+                        title=serverName.get_input()
+                        if title != "":
+                            self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old='name', new=title)
+                            self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
+                    if config_param[0] == "hostname":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_hostname_entry.get())
+                    if config_param[0] == "port" and window_login_port_entry.get() != "":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_port_entry.get())
+                    elif config_param[0] == "port" and window_login_port_entry.get() == "":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=22)
+                    if config_param[0] == "username":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_username_entry.get())
+                    if config_param[0] == "password" and window_login_password_checkbox.get() == 1:
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_password_entry.get())
+                    elif config_param[0] == "password" and window_login_password_checkbox.get() == 0:
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new="")
+                    if config_param[0] == "private_key":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_keypath_entry.get())
+                self.server = client.Client(hostname=window_login_hostname_entry.get(),
+                                    port=window_login_port_entry.get(),
+                                    username=window_login_username_entry.get(), 
+                                    password=window_login_password_entry.get(), 
+                                    key_filename=window_login_keypath_entry.get())
+                try:
+                    self.server.Connect()
+                    window.destroy()
+                    #Map the view again
+                    self.navigation_frame.grid(row=0, column=0, sticky="nsew")
+                    self.navigation_frame.grid_rowconfigure(25, weight=1)
+                    self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
                     
-            except Exception as e:
-                fail_login_label.configure(text=str(e).capitalize())
-                fail_login_label.grid(row=1, column=0, padx=15, pady=(15,15))
+                    if str(self.sshConfig['name']) == "":
+                        self.destroy()
+                    else:
+                        self._SERVERNAME=(str(self.sshConfig['name']) + f" | " + str(self.sshConfig['hostname'] + ":" + (str(self.sshConfig['port']) if not "" else "22")))
+                        self.navigation_frame_label.configure(text=self._SERVERNAME)
+                        self.patch_notes_text_box.pack(expand=1, fill="both", padx=20, pady=20)
+                        self.title(self._SERVERNAME)
+                        self.deiconify()
+                        
+                except Exception as e:
+                    fail_login_label.configure(text=str(e).capitalize())
+                    fail_login_label.grid(row=1, column=0, padx=15, pady=(15,15))
+            else:
+                #OFFLINE
+                for config_param in ConfigParams:
+                    if config_param[0] == "name" and self.sshConfig['name'] == "":
+                        serverName=customtkinter.CTkInputDialog(title="Server Name", text="Pick a server Name:")
+                        serverName.iconbitmap(self.icon)
+                        title=serverName.get_input()
+                        if title != "":
+                            self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old='name', new=title)
+                            self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
+                    if config_param[0] == "username":
+                        self.fileSystem.editConfig(file=self.fileSystem.sshConfigurationDestination, old=config_param[0], new=window_login_username_entry.get())
+                try:
+                    window.destroy()
+                    #Map the view again
+                    self.navigation_frame.grid(row=0, column=0, sticky="nsew")
+                    self.navigation_frame.grid_rowconfigure(25, weight=1)
+                    self.sshConfig, self.serverProperties = self.fileSystem.update_config_files()
+                    if str(self.sshConfig['username']) == "":
+                        pass
+                    else:
+                        self._SERVERNAME=(str(self.sshConfig['name']) + f" | "+self.sshConfig['username'])
+                        self.navigation_frame_label.configure(text=self._SERVERNAME)
+                        self.patch_notes_text_box.pack(expand=1, fill="both", padx=20, pady=20)
+                        self.title(self._SERVERNAME)
+                        self.deiconify()
+                except Exception as e:
+                    fail_login_label.configure(text=str(e).capitalize())
+                    fail_login_label.grid(row=1, column=0, padx=15, pady=(15,15))
 
-
+        
         window.bind('<Return>', onSubmit)
         window.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(text="Would you like to quit the login?"))
-
+        self._OFFLINE_MODE=False
+        
         window_login_frame = customtkinter.CTkFrame(window, corner_radius=0, width=(w-50), height=(h-50))
         window_login_frame.grid(row=0, column=0)
         window_login_label = customtkinter.CTkLabel(window_login_frame, bg_color="transparent", text="Login", font=customtkinter.CTkFont(size=20, weight="bold"))
@@ -543,7 +594,60 @@ class Main(customtkinter.CTk):
         window_login_keypath_button = customtkinter.CTkButton(window_login_frame, text="Search...", command=searchFile, width=50)
         window_login_keypath_button.grid(row=6, column=1,ipadx=0, padx=(5,20), pady=0, sticky="w")
         window_login_button = customtkinter.CTkButton(window_login_frame, text="Login", command=onSubmit, width=200)
-        window_login_button.grid(row=7, column=0, padx=30, pady=(15, 15), sticky="nsew")
+        window_login_button.grid(row=7, column=0, padx=30, pady=(15, 15), sticky="nsew")        
+
+        
+        def window_offline_on_checkbox(var):
+            if var.get() == "disabled":
+                self._OFFLINE_MODE = True
+            else:
+                self._OFFLINE_MODE = False
+            window_login_hostname_entry.configure(state=var.get(), 
+                                                  fg_color=("#F9F9FA", "#343638") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  placeholder_text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),)
+            window_login_password_entry.configure(state=var.get(), 
+                                                  fg_color=("#F9F9FA", "#343638") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  placeholder_text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  )
+            window_login_password_checkbox.configure(state=var.get(), 
+                                                  fg_color=("#F9F9FA", "#343638") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),)
+            window_login_keypath_entry.configure(state=var.get(), 
+                                                  fg_color=("#F9F9FA", "#343638") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  placeholder_text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),)
+            window_login_keypath_button.configure(state=var.get(), 
+                                                  fg_color=("#F9F9FA", "#343638") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),)
+            window_login_port_entry.configure(state=var.get(), 
+                                                  fg_color=("#F9F9FA", "#343638") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),
+                                                  placeholder_text_color= ("gray14", "gray84") 
+                                                  if var.get() != "disabled" else ("#661e1e", "#651010"),)
+            return var.get()
+            
+        var=tkinter.StringVar()
+        window_offline_checkbox = customtkinter.CTkCheckBox(window_login_frame, text="Offline mode", variable=var, command=lambda: window_offline_on_checkbox(var), onvalue="disabled", offvalue="normal")
+        window_offline_checkbox.grid(row=8, column=1, padx=20, pady=20)
+
+
         #window.make_draggable(window)
         #window.make_no_draggable(window_login_frame)
 
