@@ -1,3 +1,4 @@
+**STOPPED AT THE MOMENT FOR OTHER INCOMING PROJECTS**
 # **Project Roadmap**
 
 # **Actual state:**
